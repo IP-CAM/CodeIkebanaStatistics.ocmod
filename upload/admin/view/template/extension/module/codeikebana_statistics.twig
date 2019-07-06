@@ -1,0 +1,158 @@
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="pull-right">
+        <button type="submit" form="form-theme" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa fa-save"></i></button>
+        <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a></div>
+      <h1>{{ heading_title }}</h1>
+      <ul class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+        <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="container-fluid">
+    {% if error_warning %}
+    <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+    {% endif %}
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title"><i class="fa fa-pencil"></i> {{ text_edit }}</h3>
+      </div>
+      <div class="panel-body">
+        <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-theme" class="form-horizontal">
+          <fieldset>
+            <legend>{{ text_general }}</legend>
+            <div class="form-group">
+              <label class="col-sm-2 control-label" for="input-status">{{ entry_status }}</label>
+              <div class="col-sm-10">
+                <select name="module_codeikebana_statistics_status" id="input-status" class="form-control">
+                      {% if module_codeikebana_statistics_status %}
+                  <option value="1" selected="selected">{{ text_enabled }}</option>
+                  <option value="0">{{ text_disabled }}</option>
+                  {% else %}
+                  <option value="1">{{ text_enabled }}</option>
+                  <option value="0" selected="selected">{{ text_disabled }}</option>
+                  {% endif %}
+                </select>
+              </div>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>{{ text_statistics }}</legend>
+            <div class="form-group">
+                <div class="col-xs-2">
+                    {{ text_compleate_statuses }}
+                </div>
+                <div class="col-sm-4">
+                    {% for orderStatus in order_statuses  %}
+                        {% if orderStatus.order_status_id in config_complete_status %}
+                            <span class="label label-success">{{ orderStatus.name }}</span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="col-sm-2">
+                    {{ text_processing_statuses }}
+                </div>
+                <div class="col-sm-4">
+                    {% for orderStatus in order_statuses  %}
+                        {% if orderStatus.order_status_id in config_processing_status %}
+                                <span class="label label-info">{{ orderStatus.name }}</span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-xs-12">
+                    {{ text_statuses_info }}
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-xs-6">
+                    <ul class="list-group">
+                          <li class="list-group-item active clearfix">
+                            <div class="col-xs-3">
+                                {{ text_statistic_code }}
+                            </div>
+                            
+                            <div class="col-xs-4 text-right">
+                                {{ text_statistic_value }}
+                            </div>
+                            
+                            <div class="col-xs-4 text-right">
+                                {{ text_statistic_current }}
+                            </div>
+                            
+                            <div class="col-xs-1 text-right">
+                                {{ text_statistic_options }}
+                            </div>
+                          </li>    
+                        {% for statistic in statistics  %}
+                          <li class="list-group-item clearfix {{ statistic.code in ['order_sale', 'order_processing', 'order_complete', 'order_other'] ? '' : 'disabled' }}">
+                            <div class="col-xs-3">
+                                {{ statistic.code|replace({'_': ' '}) }}
+                            </div>
+                            
+                            <div class="col-xs-4 text-right">
+                                <span class="label label-primary">{{ statistic.code == 'order_sale' ? statistic.value|round(2, 'floor') : statistic.value|round }}</span>
+                            </div>
+                            
+                            <div class="col-xs-4 text-right">
+                                <span class="label label-success">{{ statistic.code == 'order_sale' ? statistic.current|round(2, 'floor') : statistic.current|round }}</span>
+                            </div>
+                            
+                            <div class="col-xs-1 text-right">
+                                <a class="{{ statistic.code in ['order_sale', 'order_processing', 'order_complete', 'order_other'] ? 'update-statistic' : 'disabled' }} btn btn-link"
+                                   id="{{ statistic.code }}_button"
+                                   data-toggle="tooltip"
+                                   href="#"
+                                   title="{{ text_statistics_refresh }}"
+                                   data-code="{{ statistic.code }}"
+                                   > <i class="fa fa-refresh"></i></a>
+                            </div>
+                          </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="col-xs-6">
+                    
+                </div>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+  <script type="text/javascript"><!--
+$('.update-statistic').on('click', function(e) {
+        e.preventDefault();
+        var code = $(this).data('code');
+        var error = '{{ text_error_or_not_supported }}';
+        $.ajax({
+            url: 'index.php?route=extension/module/codeikebana_statistics/refresh&user_token={{ user_token }}&code=' + code,
+            type: 'post',
+            dataType: 'json',
+            beforeSend: function() {
+                $('#'+ code +'_button i').addClass('fa-spin');
+            },
+            complete: function() {
+                $('#'+ code +'_button i').removeClass('fa-spin');
+            },
+            success: function(status) {
+                $('#'+ code +'_button i').removeClass('fa-spin');
+                    if (!status) {
+                        alert(error);
+                    }
+                },
+            error: function(xhr, ajaxOptions, thrownError) {
+                alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+            }
+        });
+});	
+//--></script>         
+{{ footer }}
